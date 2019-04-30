@@ -24,6 +24,8 @@ import pandas as pd
 from PIL import Image
 
 from nltk.tokenize import RegexpTokenizer
+from nltk.corpus import stopwords
+
 from collections import defaultdict
 
 from scipy.misc import imsave
@@ -221,31 +223,45 @@ class FashionTextDataset(data.Dataset):
         captions = self.data_h5py[caption_grp_name]
         captions_valid = self.data_h5py_valid[caption_grp_name]
         
-        lengthOfCaptions = len(captions)
-        #lengthOfCaptions = 500
+        #lengthOfCaptions = len(captions)
+        lengthOfCaptions = 4810
         print("length of captions", lengthOfCaptions )
         
         train_captions = []
         valid_captions = []
 
+        stop_words = stopwords.words('english')
+        
+ 
         for indx in range( lengthOfCaptions ):
 
             text = captions[indx][0].decode('cp437')
             reg_token_words = self.tokenizer.tokenize(text)
-            reg_token_words = [w.lower() for w in reg_token_words ]
+            reg_token_words = [w.lower() for w in reg_token_words  if w.isalpha() ]
+
+            words_filtered = reg_token_words[:] # creating a copy of the words list
+            for word in reg_token_words:
+               if word in stop_words:        
+                    words_filtered.remove(word)
 
             # append text by category 
-            train_captions.append( reg_token_words )
+            train_captions.append( words_filtered )
 
-        lengthOfCaptions = len(captions_valid)
+        #lengthOfCaptions = len(captions_valid)
         for indx in range( lengthOfCaptions ):
 
             text_valid = captions_valid[indx][0].decode('cp437')
             reg_token_words_valid = self.tokenizer.tokenize(text_valid)
-            reg_token_words_valid = [ w.lower() for w in reg_token_words_valid ]
+            reg_token_words_valid = [ w.lower() for w in reg_token_words_valid if w.isalpha() ]
+
+            words_filtered = reg_token_words_valid[:] # creating a copy of the words list
+            for word in reg_token_words_valid:
+               if word in stop_words:        
+                    words_filtered.remove(word)
 
             # append text by category 
-            valid_captions.append( reg_token_words_valid )
+            valid_captions.append( words_filtered )
+
 
         captions = train_captions + valid_captions
         print("total captions (train+validation)", len(captions) )
@@ -312,8 +328,8 @@ class FashionTextDataset(data.Dataset):
             product_id = self.data_h5py_valid[product_id_name]
             captions = self.data_h5py_valid[caption_grp_name]
 
-        lengthOfCaptions = len(captions)
-        #lengthOfCaptions = 500
+        #lengthOfCaptions = len(captions)
+        lengthOfCaptions = 4810
         print("length of captions", lengthOfCaptions )
         
         #text = self.fashion_data["input_concat_description"][index][0].decode('cp437')
@@ -431,8 +447,8 @@ class FashionTextDataset(data.Dataset):
 
 
     def __len__(self):
-        return self.number_example
-        #return int(500)
+        #return self.number_example
+        return int(4810)
 
 
 
