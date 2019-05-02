@@ -224,7 +224,7 @@ class FashionTextDataset(data.Dataset):
         captions_valid = self.data_h5py_valid[caption_grp_name]
         
         #lengthOfCaptions = len(captions)
-        lengthOfCaptions = 4810
+        lengthOfCaptions = 10000
         print("length of captions", lengthOfCaptions )
         
         train_captions = []
@@ -329,7 +329,7 @@ class FashionTextDataset(data.Dataset):
             captions = self.data_h5py_valid[caption_grp_name]
 
         #lengthOfCaptions = len(captions)
-        lengthOfCaptions = 4810
+        lengthOfCaptions = 10000
         print("length of captions", lengthOfCaptions )
         
         #text = self.fashion_data["input_concat_description"][index][0].decode('cp437')
@@ -448,7 +448,7 @@ class FashionTextDataset(data.Dataset):
 
     def __len__(self):
         #return self.number_example
-        return int(4810)
+        return int(10000)
 
 
 

@@ -50,7 +50,9 @@ def func_attention(query, context, gamma1):
     attn = attn.view(batch_size*sourceL, queryL)
 
     #print("attn on Eq.8 on GlobalAttention", attn.size()  , attn.data.cpu().sum() ) # 13872, 6   / 13872, 7 ??
-    attn = nn.Softmax(dim=0)(attn)  # Eq. (8)
+    attn = nn.Softmax(dim=1)(attn)  # Eq. (8)
+
+    #print( "sum ops on Eq(8) attention", attn.sum(dim=1) )
 
     # --> batch x sourceL x queryL
     attn = attn.view(batch_size, sourceL, queryL)
@@ -62,7 +64,7 @@ def func_attention(query, context, gamma1):
     
     #  Eq. (9)
     attn = attn * gamma1
-    attn = nn.Softmax(dim=0)(attn)
+    attn = nn.Softmax(dim=1)(attn)
     attn = attn.view(batch_size, queryL, sourceL)
     # --> batch x sourceL x queryL
     attnT = torch.transpose(attn, 1, 2).contiguous()

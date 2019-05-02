@@ -24,6 +24,7 @@ if sys.version_info[0] == 2:
 else:
     import pickle
 
+from glob import glob
 
 def prepare_data(data):
     imgs, captions, captions_lens, class_ids, keys = data
@@ -106,8 +107,9 @@ class TextDataset(data.Dataset):
 
         self.data = []
         self.data_dir = data_dir
-        if data_dir.find('birds') != -1:
-            self.bbox = self.load_bbox()
+        if data_dir.find('CelebA') != -1:
+            #self.bbox = self.load_bbox()
+            self.bbox = None
         else:
             self.bbox = None
         split_dir = os.path.join(data_dir, split)
@@ -120,12 +122,13 @@ class TextDataset(data.Dataset):
 
     def load_bbox(self):
         data_dir = self.data_dir
-        bbox_path = os.path.join(data_dir, 'CUB_200_2011/bounding_boxes.txt')
+        bbox_path = os.path.join(data_dir, 'Anno/bounding_boxes.txt')
         df_bounding_boxes = pd.read_csv(bbox_path,
                                         delim_whitespace=True,
                                         header=None).astype(int)
+        print (df_bounding_boxes)
         #
-        filepath = os.path.join(data_dir, 'CUB_200_2011/images.txt')
+        filepath = os.path.join(data_dir, 'Anno/images.txt')
         df_filenames = \
             pd.read_csv(filepath, delim_whitespace=True, header=None)
         filenames = df_filenames[1].tolist()
@@ -144,11 +147,17 @@ class TextDataset(data.Dataset):
 
     def load_captions(self, data_dir, filenames):
         all_captions = []
+
         for i in range(len(filenames)):
-            cap_path = '%s/text/%s.txt' % (data_dir, filenames[i])
+            #text_lower_dir = int(filenames[i])
+            #text_lower_dir = int((text_lower_dir-1)/10000)
+            #cap_path = '%s/text/%d/%s.txt' % (data_dir, text_lower_dir, filenames[i])
+            cap_path = filenames[i]
+            #print("caption filename",cap_path)
             with open(cap_path, "r") as f:
-                #captions = f.read().decode('cp437').split('\n')
+                # captions = f.read().decode('utf8').split('\n')
                 captions = f.read().split('\n')
+                    
                 cnt = 0
                 for cap in captions:
                     if len(cap) == 0:
@@ -168,6 +177,7 @@ class TextDataset(data.Dataset):
                         t = t.encode('ascii', 'ignore').decode('ascii')
                         if len(t) > 0:
                             tokens_new.append(t)
+                    #print(tokens_new)
                     all_captions.append(tokens_new)
                     cnt += 1
                     if cnt == self.embeddings_num:
@@ -180,6 +190,9 @@ class TextDataset(data.Dataset):
     def build_dictionary(self, train_captions, test_captions):
         word_counts = defaultdict(float)
         captions = train_captions + test_captions
+
+        print("total captions", len(captions) )
+        
         for sent in captions:
             for word in sent:
                 word_counts[word] += 1
@@ -252,16 +265,16 @@ class TextDataset(data.Dataset):
     def load_class_id(self, data_dir, total_num):
         if os.path.isfile(data_dir + '/class_info.pickle'):
             with open(data_dir + '/class_info.pickle', 'rb') as f:
-                class_id = pickle.load(f,encoding='latin1')
-                print(class_id)
-                print("load class ids from class_info.pickle.")
+                class_id = pickle.load(f)
         else:
             class_id = np.arange(total_num)
-
         return class_id
 
     def load_filenames(self, data_dir, split):
         filepath = '%s/%s/filenames.pickle' % (data_dir, split)
+
+        #filenames = glob( os.path.join(data_dir,"text","*/*.txt" ))
+
         if os.path.isfile(filepath):
             with open(filepath, 'rb') as f:
                 filenames = pickle.load(f)
@@ -297,11 +310,13 @@ class TextDataset(data.Dataset):
         #
         if self.bbox is not None:
             bbox = self.bbox[key]
-            data_dir = '%s/CUB_200_2011' % self.data_dir
+            data_dir = self.data_dir
         else:
             bbox = None
             data_dir = self.data_dir
         #
+        key = os.path.basename(key)
+        key = key.split(".")[0]
         img_name = '%s/images/%s.jpg' % (data_dir, key)
         imgs = get_imgs(img_name, self.imsize,
                         bbox, self.transform, normalize=self.norm)
